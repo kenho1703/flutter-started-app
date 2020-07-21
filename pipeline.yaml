@@ -1,0 +1,25 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: CmdLine@2
+  inputs:
+    script: |
+      git clone https://github.com/flutter/flutter.git -b stable
+      
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter pub get
+      
+      flutter build apk -t lib/main.dart
+      
+      # curl -X PUT -T  ./build/app/outputs/apk/release/app-release.apk  -H "x-ms-date: $(date -u)" -H "x-ms-blob-type: BlockBlob" "$(azureBlob)"
+      cd ./build/app/outputs/apk/release
+      curl -X POST https://upload.testfairy.com/api/upload -F api_key=$(testfairyApiKey) -F file=@app-release.apk -F testers_groups=help-my-pet -F notify=on
